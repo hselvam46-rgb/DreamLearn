@@ -43,7 +43,8 @@ export async function request<T = any>(
         response.status === 405 ||
         response.status === 404 ||
         response.status === 502 ||
-        response.status === 503
+        response.status === 503 ||
+        (response.status === 401 && token?.startsWith('demo_'))
       ) {
         console.warn(`[Demo Mode Fallback] Backend returned ${response.status} for ${endpoint}. Serving interactive demo data.`);
         return handleMockRequest<T>(endpoint, options);

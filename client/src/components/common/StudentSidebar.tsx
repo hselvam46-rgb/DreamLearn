@@ -104,9 +104,8 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({ onCloseMobile })
               <NavLink
                 key={item.path}
                 to={item.path}
-                target="_blank"
-                rel="noopener noreferrer"
                 onClick={() => {
+                  window.scrollTo({ top: 0, behavior: 'instant' });
                   if (onCloseMobile) onCloseMobile();
                 }}
                 className={`group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all focus:outline-none focus:ring-2 focus:ring-[#165DCE] focus:ring-offset-2 ${
@@ -123,7 +122,6 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({ onCloseMobile })
                   />
                   <span className="truncate">{item.label}</span>
                 </div>
-                <ExternalLink className="w-3.5 h-3.5 text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity shrink-0 ml-1" />
               </NavLink>
             );
           })}

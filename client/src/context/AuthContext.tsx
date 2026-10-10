@@ -36,15 +36,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     try {
       const res = await api.auth.getMe();
-      if (res.success && res.user) {
+      if (res?.success && res.user) {
         setUser(res.user);
         localStorage.setItem('dreamlearn_user', JSON.stringify(res.user));
-      } else {
-        logout();
       }
     } catch (err) {
-      console.warn('Session expired or invalid token:', err);
-      logout();
+      console.warn('Session refresh note:', err);
+      const saved = localStorage.getItem('dreamlearn_user');
+      if (!saved) {
+        logout();
+      }
     } finally {
       setIsLoading(false);
     }
