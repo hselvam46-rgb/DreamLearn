@@ -20,11 +20,18 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem('dreamlearn_user');
-    return saved ? JSON.parse(saved) : null;
+    try {
+      const saved = localStorage.getItem('dreamlearn_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
   });
   const [token, setToken] = useState<string | null>(getStoredToken());
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState<boolean>(() => {
+    // Only block with loading spinner if there is a token but no cached user yet
+    return !localStorage.getItem('dreamlearn_user') && !!getStoredToken();
+  });
 
   const refreshUser = async () => {
     const currentToken = getStoredToken();
@@ -42,6 +49,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     } catch (err) {
       console.warn('Session refresh note:', err);
+      // Never logout on refresh error if user is cached locally
       const saved = localStorage.getItem('dreamlearn_user');
       if (!saved) {
         logout();

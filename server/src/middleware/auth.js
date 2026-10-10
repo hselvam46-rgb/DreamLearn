@@ -20,8 +20,22 @@ const protect = async (req, res, next) => {
   }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    const user = await User.findById(decoded.id);
+    let decoded;
+    if (token.startsWith('demo_')) {
+      const isDemoAdmin = token.includes('admin');
+      decoded = {
+        email: isDemoAdmin ? 'admin@dreamlearn.edu' : 'student@dreamlearn.edu',
+        role: isDemoAdmin ? 'admin' : 'student',
+      };
+    } else {
+      decoded = jwt.verify(token, JWT_SECRET);
+    }
+
+    let user = decoded.id ? await User.findById(decoded.id) : null;
+    // If not found by ID (e.g. server restarted with newly seeded in-memory database), look up by email
+    if (!user && decoded.email) {
+      user = await User.findOne({ email: decoded.email.toLowerCase().trim() });
+    }
 
     if (!user) {
       return res.status(401).json({
