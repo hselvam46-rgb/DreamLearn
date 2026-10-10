@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="dlBgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1A68E5"/>
+      <stop offset="100%" stop-color="#0E4FC0"/>
+    </linearGradient>
+    <linearGradient id="dlFoldGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0047B3"/>
+      <stop offset="60%" stop-color="#0066FF"/>
+      <stop offset="100%" stop-color="#38B2AC" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="dlShadow" x="-10%" y="-10%" width="120%" height="120%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#0E4FC0" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <!-- Blue Rounded Squircle Base -->
+  <rect x="24" y="24" width="464" height="464" rx="112" fill="url(#dlBgGrad)" filter="url(#dlShadow)"/>
+  
+  <!-- Subtle top highlight rim -->
+  <rect x="25" y="25" width="462" height="462" rx="111" stroke="white" stroke-width="2" stroke-opacity="0.15" fill="none"/>
+
+  <!-- 'D' Letter -->
+  <path d="M136 168 H 222 C 268 168 296 198 296 256 C 296 314 268 344 222 344 H 136 V 168 Z M 186 210 V 302 H 218 C 242 302 254 286 254 256 C 254 226 242 210 218 210 H 186 Z" fill="#FFFFFF"/>
+
+  <!-- 'L' Letter with 3D Fold -->
+  <!-- 3D Shadow triangle at connection corner -->
+  <path d="M228 344 L 296 280 L 316 344 Z" fill="url(#dlFoldGrad)" opacity="0.9"/>
+
+  <!-- Main 'L' shape -->
+  <path d="M296 168 H 346 V 296 H 416 V 344 H 296 V 168 Z" fill="#FFFFFF"/>
+</svg>

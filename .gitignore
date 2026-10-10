@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build Outputs
+dist/
+client/dist/
+dist-ssr/
+build/
+
+# Local Environment & Secrets
+.env
+.env.local
+.env.*.local
+server/.env
+client/.env
+
+# Database & Cache
+.mongo_data/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Vercel & IDE
+.vercel/
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+.DS_Store
+
+# Temporary & Release Archives
+*.zip
+scratch/

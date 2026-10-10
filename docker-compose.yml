@@ -1,0 +1,68 @@
+version: '3.8'
+
+services:
+  # ==========================================================
+  # Database: MongoDB Community
+  # ==========================================================
+  mongo:
+    image: mongo:6
+    container_name: dreamlearn-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - dreamlearn-mongo-data:/data/db
+    networks:
+      - dreamlearn-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==========================================================
+  # Backend API & Sandbox Compiler Engine
+  # ==========================================================
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: dreamlearn-backend
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    ports:
+      - "5000:5000"
+    environment:
+      - PORT=5000
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://mongo:27017/dreamlearn
+      - JWT_SECRET=dreamlearn_production_jwt_secret_key_change_me
+      - CORS_ORIGIN=*
+    networks:
+      - dreamlearn-network
+
+  # ==========================================================
+  # Frontend Client (Nginx SPA)
+  # ==========================================================
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: dreamlearn-frontend
+    restart: unless-stopped
+    depends_on:
+      - server
+    ports:
+      - "3000:80"
+    networks:
+      - dreamlearn-network
+
+volumes:
+  dreamlearn-mongo-data:
+    driver: local
+
+networks:
+  dreamlearn-network:
+    driver: bridge
