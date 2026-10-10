@@ -1,3 +1,5 @@
+import { handleMockRequest } from './mockHandler';
+
 const API_BASE = (import.meta as any).env?.VITE_API_URL || '/api/v1';
 
 export const getStoredToken = (): string | null => {
@@ -28,18 +30,40 @@ export async function request<T = any>(
     headers.set('Authorization', `Bearer ${token}`);
   }
 
-  const response = await fetch(`${API_BASE}${endpoint}`, {
-    ...options,
-    headers,
-  });
+  try {
+    const response = await fetch(`${API_BASE}${endpoint}`, {
+      ...options,
+      headers,
+    });
 
-  const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      // If backend is not running (e.g. 405 Method Not Allowed on static Vercel, 404, or 502/503),
+      // gracefully fall back to interactive Demo Mode!
+      if (
+        response.status === 405 ||
+        response.status === 404 ||
+        response.status === 502 ||
+        response.status === 503
+      ) {
+        console.warn(`[Demo Mode Fallback] Backend returned ${response.status} for ${endpoint}. Serving interactive demo data.`);
+        return handleMockRequest<T>(endpoint, options);
+      }
 
-  if (!response.ok) {
-    throw new Error(data.message || `Request failed with status ${response.status}`);
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.message || `Request failed with status ${response.status}`);
+    }
+
+    const data = await response.json().catch(() => ({}));
+    return data;
+  } catch (err: any) {
+    // If network failed entirely (e.g. offline, refused connection)
+    console.warn(`[Demo Mode Fallback] Network request failed for ${endpoint}:`, err?.message);
+    try {
+      return handleMockRequest<T>(endpoint, options);
+    } catch {
+      throw err;
+    }
   }
-
-  return data;
 }
 
 export function toQueryString(params?: Record<string, any>): string {
