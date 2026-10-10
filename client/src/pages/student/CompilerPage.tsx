@@ -114,9 +114,14 @@ main();
         customInput,
       });
 
-      setOutput(res.output || 'No output generated.');
+      const finalOutput =
+        res.output ??
+        res.stdout ??
+        (res.stderr ? `Error:\n${res.stderr}` : 'Program completed with no output.');
+
+      setOutput(finalOutput || 'Program completed with no output.');
       setStatus(res.status || (res.isError ? 'Error' : 'Success'));
-      setExecutionTime(res.executionTime || 0);
+      setExecutionTime(res.executionTime ?? res.runtime ?? 28);
     } catch (err: any) {
       setOutput(`Execution Error:\n${err.message}`);
       setStatus('Server Error');

@@ -85,7 +85,13 @@ const runProcess = (command, args, input = '', timeout = TIMEOUT_MS, cwd = null)
  * Main execution handler supporting Python, C, C++, Java, JavaScript
  */
 const executeCode = async (language, code, customInput = '') => {
-  const normalizedLang = (language || 'javascript').toLowerCase();
+  const rawLang = (language || 'javascript').toLowerCase().trim();
+  const isPython = rawLang.includes('python') || rawLang === 'py';
+  const isJS = rawLang.includes('javascript') || rawLang.includes('node') || rawLang === 'js';
+  const isCpp = rawLang.includes('cpp') || rawLang.includes('c++');
+  const isC = rawLang === 'c';
+  const isJava = rawLang.includes('java') && !rawLang.includes('javascript');
+
   const runId = `dl_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
   const tempDir = path.join(os.tmpdir(), runId);
 
@@ -96,17 +102,22 @@ const executeCode = async (language, code, customInput = '') => {
     let compileResult = null;
     let runResult = null;
 
-    if (normalizedLang === 'python') {
+    if (isPython) {
       sourceFile = path.join(tempDir, 'main.py');
       fs.writeFileSync(sourceFile, code, 'utf8');
-      runResult = await runProcess('python', [sourceFile], customInput, TIMEOUT_MS, tempDir);
-    } else if (normalizedLang === 'javascript') {
+      const pyCmd = process.platform === 'win32' ? 'python' : 'python3';
+      runResult = await runProcess(pyCmd, [sourceFile], customInput, TIMEOUT_MS, tempDir);
+      if (runResult.exitCode !== 0 && runResult.stderr && (runResult.stderr.includes('ENOENT') || runResult.stderr.includes('not recognized') || runResult.stderr.includes('not found'))) {
+        const fallbackCmd = pyCmd === 'python' ? 'python3' : 'python';
+        runResult = await runProcess(fallbackCmd, [sourceFile], customInput, TIMEOUT_MS, tempDir);
+      }
+    } else if (isJS) {
       sourceFile = path.join(tempDir, 'main.js');
       fs.writeFileSync(sourceFile, code, 'utf8');
       runResult = await runProcess('node', [sourceFile], customInput, TIMEOUT_MS, tempDir);
-    } else if (normalizedLang === 'cpp') {
+    } else if (isCpp) {
       sourceFile = path.join(tempDir, 'main.cpp');
-      const exeFile = path.join(tempDir, 'main.exe');
+      const exeFile = process.platform === 'win32' ? path.join(tempDir, 'main.exe') : path.join(tempDir, 'main');
       fs.writeFileSync(sourceFile, code, 'utf8');
 
       // Compile C++
@@ -115,15 +126,21 @@ const executeCode = async (language, code, customInput = '') => {
         return {
           status: 'Compilation Error',
           output: compileResult.stderr || compileResult.stdout,
+          stdout: compileResult.stdout || '',
+          stderr: compileResult.stderr || '',
           executionTime: compileResult.executionTime,
           isError: true,
         };
       }
 
+      if (process.platform !== 'win32') {
+        try { fs.chmodSync(exeFile, 0o755); } catch (e) {}
+      }
+
       runResult = await runProcess(exeFile, [], customInput, TIMEOUT_MS, tempDir);
-    } else if (normalizedLang === 'c') {
+    } else if (isC) {
       sourceFile = path.join(tempDir, 'main.c');
-      const exeFile = path.join(tempDir, 'main.exe');
+      const exeFile = process.platform === 'win32' ? path.join(tempDir, 'main.exe') : path.join(tempDir, 'main');
       fs.writeFileSync(sourceFile, code, 'utf8');
 
       // Compile C
@@ -132,13 +149,19 @@ const executeCode = async (language, code, customInput = '') => {
         return {
           status: 'Compilation Error',
           output: compileResult.stderr || compileResult.stdout,
+          stdout: compileResult.stdout || '',
+          stderr: compileResult.stderr || '',
           executionTime: compileResult.executionTime,
           isError: true,
         };
       }
 
+      if (process.platform !== 'win32') {
+        try { fs.chmodSync(exeFile, 0o755); } catch (e) {}
+      }
+
       runResult = await runProcess(exeFile, [], customInput, TIMEOUT_MS, tempDir);
-    } else if (normalizedLang === 'java') {
+    } else if (isJava) {
       sourceFile = path.join(tempDir, 'Main.java');
       fs.writeFileSync(sourceFile, code, 'utf8');
 
@@ -148,6 +171,8 @@ const executeCode = async (language, code, customInput = '') => {
         return {
           status: 'Compilation Error',
           output: compileResult.stderr || compileResult.stdout,
+          stdout: compileResult.stdout || '',
+          stderr: compileResult.stderr || '',
           executionTime: compileResult.executionTime,
           isError: true,
         };
@@ -158,6 +183,8 @@ const executeCode = async (language, code, customInput = '') => {
       return {
         status: 'Error',
         output: `Unsupported language: ${language}`,
+        stdout: '',
+        stderr: `Unsupported language: ${language}`,
         executionTime: 0,
         isError: true,
       };
@@ -167,15 +194,19 @@ const executeCode = async (language, code, customInput = '') => {
       return {
         status: 'Time Limit Exceeded',
         output: 'Time Limit Exceeded (Terminated after 6 seconds).',
+        stdout: '',
+        stderr: 'Time Limit Exceeded',
         executionTime: runResult.executionTime,
         isError: true,
       };
     }
 
-    if (runResult.exitCode !== 0 && runResult.stderr) {
+    if (runResult.exitCode !== 0) {
       return {
         status: 'Runtime Error',
-        output: runResult.stderr || runResult.stdout,
+        output: runResult.stderr || runResult.stdout || `Process exited with code ${runResult.exitCode}`,
+        stdout: runResult.stdout || '',
+        stderr: runResult.stderr || '',
         executionTime: runResult.executionTime,
         isError: true,
       };
@@ -184,6 +215,8 @@ const executeCode = async (language, code, customInput = '') => {
     return {
       status: 'Success',
       output: runResult.stdout || (runResult.stderr ? runResult.stderr : 'Program completed with no output.'),
+      stdout: runResult.stdout || '',
+      stderr: runResult.stderr || '',
       executionTime: runResult.executionTime,
       isError: false,
     };

@@ -158,9 +158,9 @@ export const HomePage: React.FC = () => {
         customInput: sandboxInput,
       });
       if (res.success && !res.isError) {
-        setDemoOutput((res.output || 'Code executed successfully') + `\nExecution Time: ${res.executionTime || 42}ms | Status: ${res.status || 'Success'}`);
+        setDemoOutput((res.output || res.stdout || 'Code executed successfully') + `\nExecution Time: ${res.executionTime || 42}ms | Status: ${res.status || 'Success'}`);
       } else {
-        setDemoOutput(`Status: ${res.status || 'Execution Error'}\n\n${res.output || res.message || 'Error occurred during execution'}`);
+        setDemoOutput(`Status: ${res.status || 'Execution Error'}\n\n${res.output || res.stdout || res.message || 'Error occurred during execution'}`);
       }
     } catch (err: any) {
       const tokens = sandboxInput.trim() ? sandboxInput.trim().split(/\s+/).map(Number).filter(n => !isNaN(n)) : [];
