@@ -1,4 +1,5 @@
 import { handleMockRequest } from './mockHandler';
+import { executeCodeInSandbox, executeTestCasesInSandbox } from './compilerEngine';
 
 const API_BASE = (import.meta as any).env?.VITE_API_URL || '/api/v1';
 
@@ -132,13 +133,62 @@ export const api = {
 
   // Coding & Compiler
   code: {
-    run: (body: { language: string; code: string; customInput?: string; testCases?: any[] }) =>
-      request('/code/run', { method: 'POST', body: JSON.stringify(body) }),
+    run: async (body: { language: string; code: string; customInput?: string; testCases?: any[] }) => {
+      // 1. Try local backend server if active
+      try {
+        const res = await request('/code/run', { method: 'POST', body: JSON.stringify(body) });
+        if (res && res.output !== undefined && !res.message?.includes('Demo Mode') && res.output !== '') {
+          return res;
+        }
+      } catch (e) {
+        // Fall back to sandbox
+      }
+
+      // 2. Real Sandboxed Execution (Python, Java, C++, C, JavaScript with stdin)
+      if (Array.isArray(body.testCases) && body.testCases.length > 0) {
+        return executeTestCasesInSandbox(body.language, body.code, body.testCases);
+      }
+      return executeCodeInSandbox(body.language, body.code, body.customInput || '');
+    },
     getProblems: (params?: { category?: string; difficulty?: string; search?: string }) =>
       request(`/code/problems${toQueryString(params)}`),
     getProblemDetails: (slug: string) => request(`/code/problems/${slug}`),
-    submitProblem: (slug: string, body: { language: string; code: string }) =>
-      request(`/code/problems/${slug}/submit`, { method: 'POST', body: JSON.stringify(body) }),
+    submitProblem: async (slug: string, body: { language: string; code: string }) => {
+      try {
+        const res = await request(`/code/problems/${slug}/submit`, { method: 'POST', body: JSON.stringify(body) });
+        if (res && res.evalResult && !res.message?.includes('Demo Mode')) {
+          return res;
+        }
+      } catch (e) {}
+
+      // Evaluate against real problem test cases via sandbox
+      let problemTestCases = [
+        { input: '[2, 7, 11, 15], 9', expectedOutput: '[0, 1]' },
+      ];
+      try {
+        const probRes = await request(`/code/problems/${slug}`);
+        if (probRes?.problem?.testCases && probRes.problem.testCases.length > 0) {
+          problemTestCases = probRes.problem.testCases;
+        } else if (probRes?.problem?.sampleTestCases && probRes.problem.sampleTestCases.length > 0) {
+          problemTestCases = probRes.problem.sampleTestCases;
+        }
+      } catch (e) {}
+
+      const batchResult = await executeTestCasesInSandbox(body.language, body.code, problemTestCases);
+      return {
+        success: true,
+        evalResult: batchResult,
+        submission: {
+          _id: 'sub_' + Date.now(),
+          problemSlug: slug,
+          language: body.language,
+          code: body.code,
+          status: batchResult.overallStatus,
+          runtime: batchResult.averageRuntimeMs,
+          submittedAt: new Date().toISOString(),
+        },
+      };
+    },
   },
 
   // Companies

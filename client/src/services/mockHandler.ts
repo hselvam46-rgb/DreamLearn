@@ -704,83 +704,11 @@ export function handleMockRequest<T = any>(endpoint: string, options: RequestIni
   }
 
   if (routePath === '/code/run') {
-    const rawCode = body.code || '';
-    const lang = (body.language || 'python').toLowerCase();
-    const customIn = body.customInput || '';
-    let simOutput = '';
-
-    if (Array.isArray(body.testCases) && body.testCases.length > 0) {
-      const results = body.testCases.map((tc: any, idx: number) => ({
-        testCaseIndex: idx + 1,
-        input: tc.input || '',
-        expectedOutput: tc.expectedOutput || '',
-        actualOutput: tc.expectedOutput || 'Output',
-        passed: true,
-        executionTime: 24,
-      }));
-      return {
-        success: true,
-        overallStatus: 'Accepted',
-        passedTestCases: body.testCases.length,
-        totalTestCases: body.testCases.length,
-        averageRuntimeMs: 25,
-        results,
-      } as T;
-    }
-
-    const pythonPrints = [...rawCode.matchAll(/print\s*\(\s*(?:f?["'](.*?)["']|(.*?))\s*\)/gi)];
-    const jsLogs = [...rawCode.matchAll(/console\.log\s*\(\s*(?:["'](.*?)["']|(.*?))\s*\)/gi)];
-    const cppCouts = [...rawCode.matchAll(/cout\s*<<\s*["'](.*?)["']/gi)];
-    const cPrintfs = [...rawCode.matchAll(/printf\s*\(\s*["']([^"']+)["']/gi)];
-    const javaPrints = [...rawCode.matchAll(/System\.out\.println\s*\(\s*["'](.*?)["']/gi)];
-
-    if (pythonPrints.length > 0 && (lang.includes('py') || !lang.includes('script'))) {
-      simOutput = pythonPrints
-        .map((m) => (m[1] !== undefined ? m[1] : (m[2] || '').trim()))
-        .filter(Boolean)
-        .join('\n');
-    } else if (jsLogs.length > 0 && (lang.includes('js') || lang.includes('script'))) {
-      simOutput = jsLogs
-        .map((m) => (m[1] !== undefined ? m[1] : (m[2] || '').trim()))
-        .filter(Boolean)
-        .join('\n');
-    } else if (cppCouts.length > 0) {
-      simOutput = cppCouts.map((m) => m[1]).join('\n');
-    } else if (cPrintfs.length > 0) {
-      simOutput = cPrintfs.map((m) => m[1].replace(/\\n/g, '')).join('\n');
-    } else if (javaPrints.length > 0) {
-      simOutput = javaPrints.map((m) => m[1]).join('\n');
-    }
-
-    if (!simOutput.trim()) {
-      if (rawCode.includes('Sum of numbers')) {
-        simOutput = 'Welcome to DreamLearn Online Compiler!\nSum of numbers: 15';
-      } else if (rawCode.includes('Accumulated Total')) {
-        simOutput = 'Welcome to DreamLearn C++ Online Compiler!\nAccumulated Total: 150';
-      } else if (rawCode.includes('Result of 15 + 27')) {
-        simOutput = 'Welcome to DreamLearn C Online Compiler!\nResult of 15 + 27 = 42';
-      } else if (rawCode.includes('DSA Topics')) {
-        simOutput = 'Welcome to DreamLearn Java Online Compiler!\nDSA Topics: [Arrays, LinkedLists, Trees, Graphs]';
-      } else if (customIn.trim()) {
-        simOutput = `Input received: ${customIn.trim()}\nExecution successful.`;
-      } else {
-        simOutput = 'hello world';
-      }
-    }
-
     return {
       success: true,
-      output: simOutput,
-      stdout: simOutput,
-      stderr: '',
-      status: 'Success',
-      executionTime: 32,
-      runtime: 32,
-      memory: 14100,
-      isError: false,
-      testResults: [
-        { passed: true, input: customIn || 'sample', expected: simOutput, actual: simOutput },
-      ],
+      message: 'Demo Mode compiler hook - delegating to compiler engine',
+      output: '',
+      status: 'Ready',
     } as T;
   }
 

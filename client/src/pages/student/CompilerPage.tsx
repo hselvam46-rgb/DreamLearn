@@ -284,7 +284,7 @@ main();
 
                 <span
                   className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
-                    status === 'Success'
+                    status === 'Success' || status === 'Accepted'
                       ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800'
                       : status.includes('Error')
                       ? 'bg-rose-950/80 text-rose-400 border border-rose-800'
