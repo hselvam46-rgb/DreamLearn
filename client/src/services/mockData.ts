@@ -1,4 +1,4 @@
-import { User, Course, Module, Assessment, CodingProblem, Company } from '../types';
+import { User, Course, Module, Assessment, CodingProblem, Company, Question } from '../types';
 
 export const DEMO_ADMIN: User = {
   _id: 'usr_admin_001',
@@ -228,6 +228,216 @@ export const DEMO_CURRICULUM: Record<string, Module[]> = {
     },
   ],
 };
+ 
+export const DEMO_QUESTIONS: Question[] = [
+  {
+    _id: 'q_001',
+    text: 'What is the average time complexity of searching for an element in a Hash Table with a well-distributed hash function and chaining collision resolution?',
+    topic: 'Data Structures',
+    difficulty: 'Easy',
+    type: 'mcq',
+    points: 2,
+    options: [
+      { id: 'a', text: 'O(1)' },
+      { id: 'b', text: 'O(log N)' },
+      { id: 'c', text: 'O(N)' },
+      { id: 'd', text: 'O(N log N)' },
+    ],
+    correctAnswerId: 'a',
+    explanation: 'With a uniform hash function and appropriate load factor, expected search, insertion, and deletion time is O(1) amortized.',
+  },
+  {
+    _id: 'q_002',
+    text: 'Under which input condition does standard QuickSort with first-element pivot selection exhibit its worst-case time complexity of O(N^2)?',
+    topic: 'Algorithms',
+    difficulty: 'Medium',
+    type: 'mcq',
+    points: 3,
+    options: [
+      { id: 'a', text: 'When all elements are uniformly distributed and randomized' },
+      { id: 'b', text: 'When the array is already sorted in ascending or descending order' },
+      { id: 'c', text: 'When the pivot is picked using the Median-of-Medians strategy' },
+      { id: 'd', text: 'When the input array size is smaller than 16 elements' },
+    ],
+    correctAnswerId: 'b',
+    explanation: 'When the input array is already sorted and the first element is selected as pivot, each partition yields unbalanced subproblems of size 0 and N-1, requiring N*(N-1)/2 comparisons = O(N^2).',
+  },
+  {
+    _id: 'q_003',
+    text: 'Implement a function two_sum(nums, target) that returns the 0-based indices of two numbers that add up to target. Solve in Python.',
+    topic: 'Data Structures',
+    difficulty: 'Medium',
+    type: 'coding',
+    points: 5,
+    allowedLanguages: ['python'],
+    defaultLanguage: 'python',
+    starterCode: `def two_sum(nums, target):
+    seen = {}
+    for i, num in enumerate(nums):
+        diff = target - num
+        if diff in seen:
+            return [seen[diff], i]
+        seen[num] = i
+    return []`,
+    testCases: [
+      { input: '[2, 7, 11, 15], 9', expectedOutput: '[0, 1]', isHidden: false },
+      { input: '[3, 2, 4], 6', expectedOutput: '[1, 2]', isHidden: false },
+      { input: '[3, 3], 6', expectedOutput: '[0, 1]', isHidden: true },
+    ],
+    options: [],
+    explanation: 'Using a hash map allows looking up the required difference in O(1) time, yielding overall O(N) time and O(N) space.',
+  },
+  {
+    _id: 'q_004',
+    text: 'Calculate the total number of element comparisons executed by standard Bubble Sort on a reverse-sorted array of 8 elements.',
+    topic: 'Algorithms',
+    difficulty: 'Medium',
+    type: 'range',
+    points: 3,
+    exactAnswer: 28,
+    tolerance: 0,
+    rangeMin: 28,
+    rangeMax: 28,
+    options: [],
+    explanation: 'In standard Bubble Sort without early exit flags, comparisons = (N-1) + (N-2) + ... + 1 = N*(N-1)/2. For N = 8, comparisons = 8 * 7 / 2 = 28.',
+  },
+  {
+    _id: 'q_005',
+    text: 'Based on the system scenario, which architectural pattern should the platform engineering team implement to eliminate the "Cache Stampede" (Thundering Herd) effect during sudden traffic spikes?',
+    topic: 'Core CS',
+    difficulty: 'Hard',
+    type: 'case_based',
+    scenarioTitle: 'Case Study: FinTech Flash Trading & Cache Invalidation',
+    caseStudyText: 'FinTech Corp operates a real-time ledger where account balance reads must stay below 5ms. The team maintains a Redis cluster fronting PostgreSQL. During major market opening auctions, key cache keys expire simultaneously, causing thousands of concurrent worker threads to query the primary database cluster at once, pushing CPU usage to 100% and causing cascading HTTP 504 gateway timeouts.',
+    options: [
+      { id: 'a', text: 'Distributed Mutex (Locking) with Probabilistic Early Cache Recomputation (XFetch)' },
+      { id: 'b', text: 'Disable the Redis caching layer completely and rely only on PostgreSQL indexes' },
+      { id: 'c', text: 'Increase Redis TTL to 365 days without cache invalidation hooks' },
+      { id: 'd', text: 'Enable round-robin DNS directly to the primary database server' },
+    ],
+    correctAnswerId: 'a',
+    explanation: 'A distributed mutex lock guarantees that only a single worker queries PostgreSQL to recompute the expired key while other requests wait or receive stale data temporarily, completely eliminating cache stampedes.',
+    points: 5,
+  },
+  {
+    _id: 'q_006',
+    text: 'What is the maximum theoretical physical memory address space (in Gigabytes) directly addressable by a 32-bit CPU pointer architecture without PAE?',
+    topic: 'Core CS',
+    difficulty: 'Easy',
+    type: 'range',
+    points: 2,
+    exactAnswer: 4,
+    tolerance: 0,
+    rangeMin: 4,
+    rangeMax: 4,
+    options: [],
+    explanation: 'A 32-bit address space contains 2^32 distinct byte addresses = 4,294,967,296 bytes = exactly 4 Gigabytes (GB).',
+  },
+  {
+    _id: 'q_007',
+    text: 'Two trains of length 150m and 250m travel in opposite directions on parallel tracks at 45 km/h and 63 km/h respectively. In how many seconds will they completely cross each other?',
+    topic: 'Aptitude',
+    difficulty: 'Easy',
+    type: 'range',
+    points: 3,
+    exactAnswer: 13.33,
+    tolerance: 0.5,
+    rangeMin: 12.83,
+    rangeMax: 13.83,
+    options: [],
+    explanation: 'Total distance = 150m + 250m = 400m. Relative speed = 45 + 63 = 108 km/h = 108 * (5/18) = 30 m/s. Crossing time = 400 / 30 = 13.33 seconds.',
+  },
+  {
+    _id: 'q_008',
+    text: 'A box contains 5 red balls, 4 blue balls, and 3 green balls. If 2 balls are drawn at random without replacement, what is the probability that both selected balls are red?',
+    topic: 'Aptitude',
+    difficulty: 'Medium',
+    type: 'mcq',
+    points: 3,
+    options: [
+      { id: 'a', text: '5 / 33' },
+      { id: 'b', text: '10 / 33' },
+      { id: 'c', text: '25 / 144' },
+      { id: 'd', text: '5 / 66' },
+    ],
+    correctAnswerId: 'a',
+    explanation: 'Total balls = 5 + 4 + 3 = 12. P(first red) = 5/12. P(second red | first red) = 4/11. Combined probability = (5/12) * (4/11) = 20/132 = 5/33.',
+  },
+  {
+    _id: 'q_009',
+    text: 'Write a function reverse_list(head) that reverses a singly linked list in-place and returns the new head pointer. Permitted in Python, JavaScript, Java, and C++.',
+    topic: 'Data Structures',
+    difficulty: 'Easy',
+    type: 'coding',
+    points: 5,
+    allowedLanguages: ['python', 'javascript', 'cpp', 'java'],
+    defaultLanguage: 'python',
+    starterCode: `def reverse_list(head):
+    prev = None
+    curr = head
+    while curr:
+        nxt = curr.next
+        curr.next = prev
+        prev = curr
+        curr = nxt
+    return prev`,
+    testCases: [
+      { input: '[1, 2, 3, 4, 5]', expectedOutput: '[5, 4, 3, 2, 1]', isHidden: false },
+      { input: '[1, 2]', expectedOutput: '[2, 1]', isHidden: false },
+      { input: '[]', expectedOutput: '[]', isHidden: true },
+    ],
+    options: [],
+    explanation: 'The iterative three-pointer strategy (prev, curr, nxt) reverses pointer directions in a single pass with O(N) time and O(1) auxiliary space.',
+  },
+  {
+    _id: 'q_010',
+    text: 'Which ACID property guarantees that once a database transaction commits, its modifications are permanently recorded on non-volatile storage even during hardware power failures?',
+    topic: 'Core CS',
+    difficulty: 'Easy',
+    type: 'mcq',
+    points: 2,
+    options: [
+      { id: 'a', text: 'Atomicity' },
+      { id: 'b', text: 'Consistency' },
+      { id: 'c', text: 'Isolation' },
+      { id: 'd', text: 'Durability' },
+    ],
+    correctAnswerId: 'd',
+    explanation: 'Durability ensures that committed transaction state is written to non-volatile storage (such as Write-Ahead Logging / WAL) and persists across crashes.',
+  },
+  {
+    _id: 'q_011',
+    text: 'In the described real-time logistics assignment problem, which combinatorial optimization algorithm guarantees the minimum weight bipartite matching in polynomial time?',
+    topic: 'Algorithms',
+    difficulty: 'Hard',
+    type: 'case_based',
+    scenarioTitle: 'Case Study: Real-Time Fleet Dispatch Optimization',
+    caseStudyText: 'UrbanLogistics operates 8,000 electric delivery couriers in a dense metropolitan grid serving 10,000 instant grocery orders. A cost matrix C[i][j] is generated per minute based on ETA, battery charge, and traffic. The dispatch engine must match couriers to orders while minimizing aggregate delivery delay across all pairings.',
+    options: [
+      { id: 'a', text: 'Hungarian Algorithm (Kuhn-Munkres)' },
+      { id: 'b', text: 'Kruskal Minimum Spanning Tree' },
+      { id: 'c', text: 'Tarjan Strongly Connected Components' },
+      { id: 'd', text: 'Bellman-Ford Shortest Path' },
+    ],
+    correctAnswerId: 'a',
+    explanation: 'The Hungarian algorithm (Kuhn-Munkres) solves the assignment problem (minimum weight maximum bipartite matching) in O(V^3) polynomial time.',
+    points: 5,
+  },
+  {
+    _id: 'q_012',
+    text: 'In how many distinct ways can a project hiring committee of 4 members be selected from a pool of 7 senior engineers and 5 product designers?',
+    topic: 'Aptitude',
+    difficulty: 'Medium',
+    type: 'range',
+    points: 3,
+    exactAnswer: 495,
+    tolerance: 0,
+    rangeMin: 495,
+    rangeMax: 495,
+    options: [],
+    explanation: 'Total candidates = 7 + 5 = 12. The number of combinations of choosing 4 from 12 is C(12, 4) = (12 * 11 * 10 * 9) / (4 * 3 * 2 * 1) = 495.',
+  },
+];
 
 export const DEMO_ASSESSMENTS: Assessment[] = [
   {
@@ -239,51 +449,8 @@ export const DEMO_ASSESSMENTS: Assessment[] = [
     difficulty: 'Intermediate',
     durationMinutes: 45,
     passingScore: 70,
-    totalQuestions: 15,
-    questions: [
-      {
-        _id: 'q_001',
-        text: 'What is the worst-case time complexity of searching for an element in a balanced binary search tree of N nodes?',
-        type: 'mcq',
-        topic: 'Trees',
-        difficulty: 'Easy',
-        points: 5,
-        options: [
-          { id: 'a', text: 'O(1)' },
-          { id: 'b', text: 'O(log N)' },
-          { id: 'c', text: 'O(N)' },
-          { id: 'd', text: 'O(N log N)' },
-        ],
-      },
-      {
-        _id: 'q_002',
-        text: 'Under which condition does standard QuickSort exhibit its worst-case time complexity of O(N^2)?',
-        type: 'mcq',
-        topic: 'Sorting',
-        difficulty: 'Medium',
-        points: 5,
-        options: [
-          { id: 'a', text: 'When all elements are distinct and randomized' },
-          { id: 'b', text: 'When the array is already sorted and the first or last element is chosen as pivot' },
-          { id: 'c', text: 'When the pivot is chosen as the true median' },
-          { id: 'd', text: 'When the input size is smaller than 16' },
-        ],
-      },
-      {
-        _id: 'q_003',
-        text: 'Which algorithm detects a cycle in a linked list using O(1) auxiliary space?',
-        type: 'mcq',
-        topic: 'Linked Lists',
-        difficulty: 'Medium',
-        points: 5,
-        options: [
-          { id: 'a', text: 'Dijkstras Shortest Path' },
-          { id: 'b', text: 'Floyds Tortoise and Hare (Fast & Slow Pointers)' },
-          { id: 'c', text: 'Kruskals Algorithm' },
-          { id: 'd', text: 'Tarjans Strongly Connected Components' },
-        ],
-      },
-    ],
+    totalQuestions: 6,
+    questions: DEMO_QUESTIONS.slice(0, 6),
     status: 'Published',
     attemptsAllowed: 3,
   },
@@ -296,23 +463,8 @@ export const DEMO_ASSESSMENTS: Assessment[] = [
     difficulty: 'Intermediate',
     durationMinutes: 30,
     passingScore: 65,
-    totalQuestions: 10,
-    questions: [
-      {
-        _id: 'q_101',
-        text: 'Which queue in the JavaScript runtime executes Promise resolution callbacks (.then / await)?',
-        type: 'mcq',
-        topic: 'JavaScript',
-        difficulty: 'Medium',
-        points: 5,
-        options: [
-          { id: 'a', text: 'Macrotask Queue (Task Queue)' },
-          { id: 'b', text: 'Microtask Queue' },
-          { id: 'c', text: 'Render Queue' },
-          { id: 'd', text: 'Call Stack only' },
-        ],
-      },
-    ],
+    totalQuestions: 6,
+    questions: DEMO_QUESTIONS.slice(6, 12),
     status: 'Published',
     attemptsAllowed: 2,
   },

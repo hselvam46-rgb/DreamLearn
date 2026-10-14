@@ -6,13 +6,14 @@ import {
   DEMO_ASSESSMENTS,
   DEMO_PROBLEMS,
   DEMO_COMPANIES,
+  DEMO_QUESTIONS,
 } from './mockData';
 
 const STORAGE_COURSES = 'dreamlearn_demo_courses_v2';
 const STORAGE_ASSESSMENTS = 'dreamlearn_demo_assessments_v2';
 const STORAGE_ENROLLMENTS = 'dreamlearn_demo_enrollments_v2';
 const STORAGE_CURRICULUM = 'dreamlearn_demo_curriculum_v2';
-const STORAGE_QUESTIONS = 'dreamlearn_demo_questions_v2';
+const STORAGE_QUESTIONS = 'dreamlearn_demo_questions_v3';
 
 export function getStoredCourses(): any[] {
   try {
@@ -21,17 +22,17 @@ export function getStoredCourses(): any[] {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) return parsed;
     }
-  } catch (e) {}
+  } catch (e) { }
   try {
     localStorage.setItem(STORAGE_COURSES, JSON.stringify(DEMO_COURSES));
-  } catch (e) {}
+  } catch (e) { }
   return [...DEMO_COURSES];
 }
 
 export function saveStoredCourses(courses: any[]) {
   try {
     localStorage.setItem(STORAGE_COURSES, JSON.stringify(courses));
-  } catch (e) {}
+  } catch (e) { }
 }
 
 export function getStoredAssessments(): any[] {
@@ -41,17 +42,17 @@ export function getStoredAssessments(): any[] {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed) && parsed.length > 0) return parsed;
     }
-  } catch (e) {}
+  } catch (e) { }
   try {
     localStorage.setItem(STORAGE_ASSESSMENTS, JSON.stringify(DEMO_ASSESSMENTS));
-  } catch (e) {}
+  } catch (e) { }
   return [...DEMO_ASSESSMENTS];
 }
 
 export function saveStoredAssessments(assessments: any[]) {
   try {
     localStorage.setItem(STORAGE_ASSESSMENTS, JSON.stringify(assessments));
-  } catch (e) {}
+  } catch (e) { }
 }
 
 export function getStoredEnrollments(): any[] {
@@ -61,7 +62,7 @@ export function getStoredEnrollments(): any[] {
       const parsed = JSON.parse(raw);
       if (Array.isArray(parsed)) return parsed;
     }
-  } catch (e) {}
+  } catch (e) { }
   const courses = getStoredCourses();
   const initial = [
     {
@@ -89,49 +90,51 @@ export function getStoredEnrollments(): any[] {
   ];
   try {
     localStorage.setItem(STORAGE_ENROLLMENTS, JSON.stringify(initial));
-  } catch (e) {}
+  } catch (e) { }
   return initial;
 }
 
 export function saveStoredEnrollments(enrollments: any[]) {
   try {
     localStorage.setItem(STORAGE_ENROLLMENTS, JSON.stringify(enrollments));
-  } catch (e) {}
+  } catch (e) { }
 }
 
 export function getStoredCurriculum(): Record<string, any[]> {
   try {
     const raw = localStorage.getItem(STORAGE_CURRICULUM);
     if (raw) return JSON.parse(raw);
-  } catch (e) {}
+  } catch (e) { }
   try {
     localStorage.setItem(STORAGE_CURRICULUM, JSON.stringify(DEMO_CURRICULUM));
-  } catch (e) {}
+  } catch (e) { }
   return { ...DEMO_CURRICULUM };
 }
 
 export function saveStoredCurriculum(curr: Record<string, any[]>) {
   try {
     localStorage.setItem(STORAGE_CURRICULUM, JSON.stringify(curr));
-  } catch (e) {}
+  } catch (e) { }
 }
 
 export function getStoredQuestions(): any[] {
   try {
     const raw = localStorage.getItem(STORAGE_QUESTIONS);
-    if (raw) return JSON.parse(raw);
-  } catch (e) {}
-  const qList = DEMO_ASSESSMENTS[0]?.questions || [];
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) { }
   try {
-    localStorage.setItem(STORAGE_QUESTIONS, JSON.stringify(qList));
-  } catch (e) {}
-  return [...qList];
+    localStorage.setItem(STORAGE_QUESTIONS, JSON.stringify(DEMO_QUESTIONS));
+  } catch (e) { }
+  return [...DEMO_QUESTIONS];
 }
 
 export function saveStoredQuestions(questions: any[]) {
   try {
     localStorage.setItem(STORAGE_QUESTIONS, JSON.stringify(questions));
-  } catch (e) {}
+  } catch (e) { }
 }
 
 export function handleMockRequest<T = any>(endpoint: string, options: RequestInit = {}): T {

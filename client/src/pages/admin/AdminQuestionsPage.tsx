@@ -406,6 +406,11 @@ export const AdminQuestionsPage: React.FC = () => {
     }
   };
 
+  // Dynamic Topic Discovery
+  const baseTopics = ['All', 'Data Structures', 'Algorithms', 'Core CS', 'Aptitude'];
+  const dynamicTopics = Array.from(new Set(questions.map((q) => q.topic).filter(Boolean)));
+  const allTopics = ['All', ...Array.from(new Set([...baseTopics.filter((t) => t !== 'All'), ...dynamicTopics]))];
+
   // Filter questions on client side for type
   const filteredQuestions = questions.filter(q => {
     if (typeFilter !== 'All' && (q.type || 'mcq') !== typeFilter) return false;
@@ -453,10 +458,44 @@ export const AdminQuestionsPage: React.FC = () => {
             <input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                if (e.target.value === '' && search !== '') {
+                  api.admin.getQuestions({
+                    topic: topic !== 'All' ? topic : undefined,
+                    difficulty: difficultyFilter !== 'All' ? difficultyFilter : undefined,
+                  }).then((res) => {
+                    if (res.questions) setQuestions(res.questions);
+                  });
+                }
+              }}
               placeholder="Search questions by text or topic..."
-              className="w-full h-10 pl-10 pr-20 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full h-10 pl-10 pr-24 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+            {search && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch('');
+                  api.admin.getQuestions({
+                    topic: topic !== 'All' ? topic : undefined,
+                    difficulty: difficultyFilter !== 'All' ? difficultyFilter : undefined,
+                  }).then((res) => {
+                    if (res.questions) setQuestions(res.questions);
+                  });
+                }}
+                className="absolute right-16 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-1 cursor-pointer"
+                title="Clear search"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+            <button
+              type="submit"
+              className="absolute right-2 top-1/2 -translate-y-1/2 px-2.5 py-1 bg-slate-800 hover:bg-slate-900 text-white rounded-lg text-[11px] font-bold cursor-pointer"
+            >
+              Search
+            </button>
           </form>
 
           {/* Difficulty Filter */}
@@ -507,9 +546,9 @@ export const AdminQuestionsPage: React.FC = () => {
           </div>
 
           {/* Topic Filter */}
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 flex-wrap">
             <span className="text-xs font-bold text-slate-400">Topic:</span>
-            {['All', 'Data Structures', 'Algorithms', 'Core CS', 'Aptitude'].map((t) => (
+            {allTopics.map((t) => (
               <button
                 key={t}
                 onClick={() => setTopic(t)}
@@ -535,12 +574,27 @@ export const AdminQuestionsPage: React.FC = () => {
           <HelpCircle className="w-10 h-10 text-slate-300 mx-auto" />
           <h3 className="text-base font-bold text-slate-800">No questions found matching your filter</h3>
           <p className="text-xs text-slate-500">Try adjusting your filters or add a new question to the Question Bank.</p>
-          <button
-            onClick={handleOpenCreate}
-            className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 cursor-pointer"
-          >
-            Add First Question
-          </button>
+          <div className="flex items-center justify-center gap-3 pt-2">
+            {(search || topic !== 'All' || typeFilter !== 'All' || difficultyFilter !== 'All') && (
+              <button
+                onClick={() => {
+                  setSearch('');
+                  setTopic('All');
+                  setTypeFilter('All');
+                  setDifficultyFilter('All');
+                }}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer"
+              >
+                Reset All Filters
+              </button>
+            )}
+            <button
+              onClick={handleOpenCreate}
+              className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-700 cursor-pointer"
+            >
+              Add First Question
+            </button>
+          </div>
         </div>
       ) : (
         <div className="space-y-4">
