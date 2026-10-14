@@ -211,7 +211,7 @@ export function handleMockRequest<T = any>(endpoint: string, options: RequestIni
   // 2. Courses (Student & Public)
   if (routePath === '/courses' && method === 'GET') {
     const allCourses = getStoredCourses();
-    let filtered = allCourses.filter((c) => c.status === 'Published');
+    let filtered = allCourses.filter((c) => !c.status || c.status.toLowerCase() === 'published');
 
     if (categoryParam && categoryParam !== 'All') {
       filtered = filtered.filter(
@@ -509,7 +509,7 @@ export function handleMockRequest<T = any>(endpoint: string, options: RequestIni
   // 3. Assessments & Assignments
   if (routePath === '/assessments' && method === 'GET') {
     const allAssessments = getStoredAssessments();
-    let filtered = allAssessments.filter((a) => a.status === 'Published');
+    let filtered = allAssessments.filter((a) => !a.status || a.status.toLowerCase() === 'published');
 
     if (categoryParam && categoryParam !== 'All') {
       filtered = filtered.filter(
@@ -760,8 +760,8 @@ export function handleMockRequest<T = any>(endpoint: string, options: RequestIni
   // 7. Student Dashboard
   if (routePath === '/student/dashboard') {
     const enrollments = getStoredEnrollments();
-    const allCourses = getStoredCourses().filter((c) => c.status === 'Published');
-    const allAssessments = getStoredAssessments().filter((a) => a.status === 'Published');
+    const allCourses = getStoredCourses().filter((c) => !c.status || c.status.toLowerCase() === 'published');
+    const allAssessments = getStoredAssessments().filter((a) => !a.status || a.status.toLowerCase() === 'published');
 
     return {
       success: true,
@@ -801,7 +801,7 @@ export function handleMockRequest<T = any>(endpoint: string, options: RequestIni
         totalStudents: 148,
         activeStudents: 142,
         totalCourses: courses.length,
-        publishedCourses: courses.filter((c) => c.status === 'Published').length,
+        publishedCourses: courses.filter((c) => !c.status || c.status.toLowerCase() === 'published').length,
         draftCourses: courses.filter((c) => c.status === 'Draft').length,
         totalEnrollments: enrollments.length + 280,
         completedEnrollments: 142,
