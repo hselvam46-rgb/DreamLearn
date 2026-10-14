@@ -64,6 +64,7 @@ const getStudentDashboardSummary = async (req, res) => {
     const studentId = req.user._id;
 
     const enrollments = await Enrollment.find({ studentId }).populate('courseId').sort({ enrolledAt: -1 });
+    const validEnrollments = enrollments.filter((e) => e.courseId != null);
     const recentAttempts = await AssessmentAttempt.find({ studentId, status: 'completed' })
       .populate('assessmentId', 'title category durationMinutes')
       .sort({ submittedAt: -1 })
@@ -76,7 +77,7 @@ const getStudentDashboardSummary = async (req, res) => {
     return res.json({
       success: true,
       user: req.user,
-      enrollments,
+      enrollments: validEnrollments,
       recentAttempts,
       recentSubmissions,
     });

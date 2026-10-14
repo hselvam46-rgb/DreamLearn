@@ -11,7 +11,15 @@ export const CoursesPage: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedDifficulty, setSelectedDifficulty] = useState('All');
 
-  const categories = ['All', 'Data Structures', 'Programming Languages', 'Placement Preparation'];
+  const standardCategories = [
+    'All',
+    'Data Structures',
+    'Programming Languages',
+    'Placement Preparation',
+    'Core CS',
+    'Web Development',
+  ];
+  const [categories, setCategories] = useState<string[]>(standardCategories);
   const difficulties = ['All', 'Beginner', 'Intermediate', 'Advanced', 'Beginner to Advanced'];
 
   const fetchCourses = () => {
@@ -22,7 +30,13 @@ export const CoursesPage: React.FC = () => {
       search: search || undefined,
     })
       .then((res) => {
-        setCourses(res.courses || []);
+        const list = res.courses || [];
+        setCourses(list);
+        const discovered = new Set(standardCategories);
+        list.forEach((c: Course) => {
+          if (c.category) discovered.add(c.category);
+        });
+        setCategories(Array.from(discovered));
       })
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));

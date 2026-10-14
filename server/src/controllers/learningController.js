@@ -55,9 +55,11 @@ const getMyEnrollments = async (req, res) => {
       .populate('courseId')
       .sort({ enrolledAt: -1 });
 
+    const validEnrollments = enrollments.filter((e) => e.courseId != null);
+
     return res.json({
       success: true,
-      enrollments,
+      enrollments: validEnrollments,
     });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });

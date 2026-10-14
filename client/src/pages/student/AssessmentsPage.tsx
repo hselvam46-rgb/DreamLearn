@@ -9,7 +9,8 @@ export const AssessmentsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState('All');
 
-  const categories = ['All', 'DSA', 'Core CS', 'Aptitude', 'Placement Mock'];
+  const standardCategories = ['All', 'DSA', 'Core CS', 'Aptitude', 'Web Development', 'Placement Mock', 'General'];
+  const [allCategories, setAllCategories] = useState<string[]>(standardCategories);
 
   useEffect(() => {
     setLoading(true);
@@ -17,7 +18,15 @@ export const AssessmentsPage: React.FC = () => {
       category: category !== 'All' ? category : undefined,
     })
       .then((res) => {
-        if (res.assessments) setAssessments(res.assessments);
+        if (res.assessments) {
+          setAssessments(res.assessments);
+          // Dynamically collect any other categories that exist
+          const discovered = new Set(standardCategories);
+          res.assessments.forEach((a: Assessment) => {
+            if (a.category) discovered.add(a.category);
+          });
+          setAllCategories(Array.from(discovered));
+        }
       })
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));
@@ -43,7 +52,7 @@ export const AssessmentsPage: React.FC = () => {
 
         {/* Quick Filter */}
         <div className="flex flex-wrap items-center gap-1.5 bg-surface p-1 rounded-xl border border-slate-200">
-          {categories.map((cat) => (
+          {allCategories.map((cat) => (
             <button
               key={cat}
               onClick={() => setCategory(cat)}
@@ -66,8 +75,17 @@ export const AssessmentsPage: React.FC = () => {
           <p className="text-sm font-semibold text-slate-500">Loading assessments...</p>
         </div>
       ) : assessments.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-2xl border border-dashed border-slate-300 p-8">
-          <p className="text-base font-bold text-[#102344]">No assessments found in this category.</p>
+        <div className="text-center py-16 bg-white rounded-2xl border border-dashed border-slate-300 p-8 space-y-3">
+          <p className="text-base font-bold text-[#102344]">No assessments found in this category ({category}).</p>
+          <p className="text-xs text-slate-500">Try switching to "All" to see all published assessments and mock tests.</p>
+          {category !== 'All' && (
+            <button
+              onClick={() => setCategory('All')}
+              className="px-4 py-2 bg-[#165DCE] text-white text-xs font-bold rounded-xl shadow-xs hover:bg-[#124cb0]"
+            >
+              Show All Assessments
+            </button>
+          )}
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -29,6 +29,7 @@ export const StudentDashboard: React.FC = () => {
   const [recentSubmissions, setRecentSubmissions] = useState<CodeSubmission[]>([]);
   const [publishedCourses, setPublishedCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(true);
+  const [enrollingId, setEnrollingId] = useState<string | null>(null);
 
   // Time-aware greeting
   const getGreeting = () => {
@@ -38,7 +39,7 @@ export const StudentDashboard: React.FC = () => {
     return 'Good evening';
   };
 
-  useEffect(() => {
+  const fetchDashboardData = () => {
     Promise.all([
       api.student.getDashboard().catch(() => null),
       api.courses.getMyEnrollments().catch(() => ({ enrollments: [] })),
@@ -57,7 +58,7 @@ export const StudentDashboard: React.FC = () => {
         }
 
         if (assessRes?.assessments) {
-          setAssessments(assessRes.assessments.slice(0, 3));
+          setAssessments(assessRes.assessments);
         }
 
         if (courseRes?.courses) {
@@ -66,9 +67,34 @@ export const StudentDashboard: React.FC = () => {
       })
       .catch((err) => console.error('Dashboard load error:', err))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
   }, []);
 
-  const primaryEnrollment = enrollments[0];
+  const handleQuickEnroll = async (courseId: string) => {
+    setEnrollingId(courseId);
+    try {
+      await api.courses.enroll(courseId);
+      fetchDashboardData();
+    } catch (err: any) {
+      console.error('Quick enrollment failed:', err);
+    } finally {
+      setEnrollingId(null);
+    }
+  };
+
+  // Safe filtering: exclude corrupt or deleted course references
+  const validEnrollments = enrollments.filter(
+    (en) => en && en.courseId && typeof en.courseId === 'object' && en.courseId._id
+  );
+  const primaryEnrollment = validEnrollments[0];
+
+  const enrolledCourseIdSet = new Set(validEnrollments.map((en) => en.courseId._id));
+  const availableCoursesToEnroll = publishedCourses.filter(
+    (c) => !enrolledCourseIdSet.has(c._id)
+  );
 
   // Weekly activity mockup visualization data
   const weeklyDays = [
@@ -376,7 +402,7 @@ export const StudentDashboard: React.FC = () => {
             <div className="flex items-center justify-between">
               <h3 className="text-base font-extrabold text-[#102344]">Enrolled Courses</h3>
               <Link to="/student/my-learning" className="text-xs font-bold text-[#165DCE] hover:underline">
-                View all ({enrollments.length})
+                View all ({validEnrollments.length})
               </Link>
             </div>
 
@@ -384,12 +410,12 @@ export const StudentDashboard: React.FC = () => {
               <div className="p-8 text-center bg-white rounded-2xl border border-slate-200">
                 <div className="w-8 h-8 border-3 border-[#165DCE] border-t-transparent rounded-full animate-spin mx-auto" />
               </div>
-            ) : enrollments.length === 0 ? (
+            ) : validEnrollments.length === 0 ? (
               <div className="space-y-4">
                 <div className="p-6 text-center bg-white rounded-2xl border border-dashed border-slate-300 space-y-3">
                   <p className="text-sm font-bold text-[#102344]">No enrolled courses active yet.</p>
                   <p className="text-xs text-slate-500">Choose from newly added technical tracks below or explore the full course catalog.</p>
-                  <Link to="/courses" className="inline-block px-4 py-2 bg-[#165DCE] text-white text-xs font-bold rounded-xl shadow-sm hover:bg-[#124cb0] transition-colors">
+                  <Link to="/student/courses" className="inline-block px-4 py-2 bg-[#165DCE] text-white text-xs font-bold rounded-xl shadow-sm hover:bg-[#124cb0] transition-colors">
                     Browse All Courses ({publishedCourses.length})
                   </Link>
                 </div>
@@ -397,10 +423,10 @@ export const StudentDashboard: React.FC = () => {
                 {publishedCourses.length > 0 && (
                   <div className="space-y-3">
                     <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 block">
-                      Newly Added & Available Courses
+                      Newly Added & Available Courses ({publishedCourses.length})
                     </span>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      {publishedCourses.slice(0, 4).map((c) => (
+                      {publishedCourses.map((c) => (
                         <div key={c._id} className="bg-white rounded-2xl border border-[#E1E8F2] p-4 shadow-xs hover:shadow-md transition-all flex flex-col justify-between gap-3">
                           <div className="flex items-start gap-3">
                             <img
@@ -415,15 +441,22 @@ export const StudentDashboard: React.FC = () => {
                               <h4 className="text-xs font-extrabold text-[#102344] leading-snug line-clamp-2">
                                 {c.title}
                               </h4>
+                              <span className="text-[10px] text-slate-400 block">{c.duration} • {c.difficulty}</span>
                             </div>
                           </div>
-                          <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px]">
-                            <span className="text-slate-500 font-semibold">{c.duration}</span>
+                          <div className="flex items-center gap-2 pt-2 border-t border-slate-100 text-[11px]">
+                            <button
+                              onClick={() => handleQuickEnroll(c._id)}
+                              disabled={enrollingId === c._id}
+                              className="flex-1 py-1.5 px-3 bg-[#165DCE] hover:bg-[#124cb0] disabled:opacity-50 text-white rounded-lg font-bold transition-colors cursor-pointer text-center"
+                            >
+                              {enrollingId === c._id ? 'Enrolling...' : 'Enroll in Course'}
+                            </button>
                             <Link
                               to={`/courses/${c.slug || c._id}`}
-                              className="px-3 py-1 bg-blue-50 text-[#165DCE] hover:bg-[#165DCE] hover:text-white rounded-lg font-bold transition-colors"
+                              className="px-3 py-1.5 bg-blue-50 text-[#165DCE] hover:bg-[#165DCE] hover:text-white rounded-lg font-bold transition-colors"
                             >
-                              View Course →
+                              Details →
                             </Link>
                           </div>
                         </div>
@@ -435,7 +468,7 @@ export const StudentDashboard: React.FC = () => {
             ) : (
               <div className="space-y-4">
                 <div className="space-y-3">
-                  {enrollments.map((en) => (
+                  {validEnrollments.map((en) => (
                     <div
                       key={en._id}
                       className="bg-white rounded-2xl border border-[#E1E8F2] p-4 sm:p-5 shadow-xs hover:shadow-md transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
@@ -480,30 +513,50 @@ export const StudentDashboard: React.FC = () => {
                   ))}
                 </div>
 
-                {/* Additional Available Courses */}
-                {publishedCourses.length > 0 && (
-                  <div className="pt-2 space-y-2">
+                {/* Available Courses & Newly Added Tracks to Enroll */}
+                {availableCoursesToEnroll.length > 0 && (
+                  <div className="pt-3 space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400">
-                        Explore More Courses
-                      </span>
-                      <Link to="/courses" className="text-xs font-bold text-[#165DCE] hover:underline">
-                        See all catalog →
+                      <div>
+                        <span className="text-xs font-extrabold uppercase tracking-wider text-slate-400 block">
+                          Newly Added & Available Courses ({availableCoursesToEnroll.length})
+                        </span>
+                        <p className="text-[11px] text-slate-500">
+                          Discover newly added curriculum tracks and enroll with 1-click.
+                        </p>
+                      </div>
+                      <Link to="/student/courses" className="text-xs font-bold text-[#165DCE] hover:underline shrink-0">
+                        Explore all catalog →
                       </Link>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      {publishedCourses.slice(0, 2).map((c) => (
-                        <div key={c._id} className="bg-slate-50/70 rounded-xl border border-slate-200/70 p-3 flex items-center justify-between gap-3">
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <img src={c.thumbnail} alt={c.title} className="w-10 h-10 rounded-lg object-cover shrink-0" />
-                            <div className="truncate">
-                              <h5 className="text-xs font-bold text-[#102344] truncate">{c.title}</h5>
-                              <span className="text-[10px] text-slate-500">{c.duration}</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      {availableCoursesToEnroll.map((c) => (
+                        <div key={c._id} className="bg-slate-50/80 rounded-2xl border border-slate-200/80 p-4 flex flex-col justify-between gap-3 hover:border-blue-300 transition-all">
+                          <div className="flex items-start gap-3">
+                            <img src={c.thumbnail} alt={c.title} className="w-14 h-14 rounded-xl object-cover shrink-0 border border-slate-200" />
+                            <div className="min-w-0 space-y-1">
+                              <span className="text-[10px] font-black text-[#165DCE] uppercase tracking-wider block truncate">
+                                {c.category}
+                              </span>
+                              <h5 className="text-xs font-extrabold text-[#102344] leading-snug line-clamp-2">{c.title}</h5>
+                              <span className="text-[10px] text-slate-500 block">{c.duration} • {c.difficulty}</span>
                             </div>
                           </div>
-                          <Link to={`/courses/${c.slug || c._id}`} className="px-2.5 py-1 bg-white border border-slate-200 hover:border-blue-300 rounded-lg text-[11px] font-bold text-[#165DCE] shrink-0">
-                            View
-                          </Link>
+                          <div className="flex items-center gap-2 pt-2 border-t border-slate-200/60">
+                            <button
+                              onClick={() => handleQuickEnroll(c._id)}
+                              disabled={enrollingId === c._id}
+                              className="flex-1 py-1.5 px-3 bg-[#165DCE] hover:bg-[#124cb0] disabled:opacity-50 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer text-center"
+                            >
+                              {enrollingId === c._id ? 'Enrolling...' : 'Enroll in Course'}
+                            </button>
+                            <Link
+                              to={`/courses/${c.slug || c._id}`}
+                              className="px-3 py-1.5 bg-white border border-slate-200 hover:border-blue-300 rounded-lg text-xs font-bold text-slate-700 hover:text-[#165DCE] transition-colors"
+                            >
+                              Details
+                            </Link>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -634,38 +687,54 @@ export const StudentDashboard: React.FC = () => {
           {/* Upcoming Assessments */}
           <div className="bg-white rounded-2xl border border-[#E1E8F2] p-5 shadow-xs space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-extrabold text-[#102344]">Upcoming Mock Tests</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-extrabold text-[#102344]">Upcoming Mock Tests</h3>
+                {assessments.length > 0 && (
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-blue-50 text-[#165DCE]">
+                    {assessments.length}
+                  </span>
+                )}
+              </div>
               <Link to="/student/assessments" className="text-xs font-bold text-[#165DCE] hover:underline">
                 View all
               </Link>
             </div>
 
-            <div className="space-y-3">
-              {assessments.map((a) => (
-                <div
-                  key={a._id}
-                  className="p-3.5 rounded-xl bg-[#F8F9FE] border border-slate-200/80 hover:border-blue-300 transition-all space-y-2.5"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-black text-[#165DCE] bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
-                      {a.category}
-                    </span>
-                    <span className="text-[11px] text-slate-500 font-semibold flex items-center gap-1">
-                      <Clock className="w-3 h-3 text-slate-400" /> {a.durationMinutes}m
-                    </span>
-                  </div>
-
-                  <h4 className="text-xs font-extrabold text-[#102344] line-clamp-1">{a.title}</h4>
-
-                  <Link
-                    to={`/student/assessments/${a._id}/take`}
-                    className="w-full py-2 rounded-xl text-xs font-extrabold text-center bg-white border border-[#E1E8F2] hover:bg-[#165DCE] hover:text-white hover:border-[#165DCE] transition-all block text-slate-700 shadow-2xs"
+            {assessments.length === 0 ? (
+              <div className="p-4 rounded-xl bg-slate-50 border border-dashed border-slate-200 text-center space-y-1.5">
+                <p className="text-xs font-bold text-slate-700">No mock tests available yet.</p>
+                <Link to="/student/assessments" className="text-[11px] text-[#165DCE] font-bold hover:underline block">
+                  Check Assessments Hub →
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {assessments.slice(0, 5).map((a) => (
+                  <div
+                    key={a._id}
+                    className="p-3.5 rounded-xl bg-[#F8F9FE] border border-slate-200/80 hover:border-blue-300 transition-all space-y-2.5"
                   >
-                    Start Assessment
-                  </Link>
-                </div>
-              ))}
-            </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-black text-[#165DCE] bg-blue-50 px-2 py-0.5 rounded-md border border-blue-100">
+                        {a.category}
+                      </span>
+                      <span className="text-[11px] text-slate-500 font-semibold flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-slate-400" /> {a.durationMinutes}m
+                      </span>
+                    </div>
+
+                    <h4 className="text-xs font-extrabold text-[#102344] line-clamp-1">{a.title}</h4>
+
+                    <Link
+                      to={`/student/assessments/${a._id}/take`}
+                      className="w-full py-2 rounded-xl text-xs font-extrabold text-center bg-white border border-[#E1E8F2] hover:bg-[#165DCE] hover:text-white hover:border-[#165DCE] transition-all block text-slate-700 shadow-2xs"
+                    >
+                      Start Assessment
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Quick Support / Preparation Note */}
