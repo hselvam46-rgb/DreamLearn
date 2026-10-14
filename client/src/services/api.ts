@@ -37,9 +37,13 @@ export async function request<T = any>(
       headers,
     });
 
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('text/html')) {
+      console.warn(`[Demo Mode Fallback] Backend not running for ${endpoint} (received HTML SPA rewrite). Serving interactive mock data.`);
+      return handleMockRequest<T>(endpoint, options);
+    }
+
     if (!response.ok) {
-      // If backend is not running (e.g. 405 Method Not Allowed on static Vercel, 404, or 502/503),
-      // gracefully fall back to interactive Demo Mode!
       if (
         response.status === 405 ||
         response.status === 404 ||
@@ -55,8 +59,13 @@ export async function request<T = any>(
       throw new Error(data.message || `Request failed with status ${response.status}`);
     }
 
-    const data = await response.json().catch(() => ({}));
-    return data;
+    try {
+      const data = await response.json();
+      return data;
+    } catch {
+      console.warn(`[Demo Mode Fallback] Failed to parse JSON for ${endpoint}. Serving interactive mock data.`);
+      return handleMockRequest<T>(endpoint, options);
+    }
   } catch (err: any) {
     // If network failed entirely (e.g. offline, refused connection)
     console.warn(`[Demo Mode Fallback] Network request failed for ${endpoint}:`, err?.message);
@@ -133,18 +142,7 @@ export const api = {
 
   // Coding & Compiler
   code: {
-    run: async (body: { language: string; code: string; customInput?: string; testCases?: any[] }) => {
-      // 1. Try local backend server if active
-      try {
-        const res = await request('/code/run', { method: 'POST', body: JSON.stringify(body) });
-        if (res && res.output !== undefined && !res.message?.includes('Demo Mode') && res.output !== '') {
-          return res;
-        }
-      } catch (e) {
-        // Fall back to sandbox
-      }
-
-      // 2. Real Sandboxed Execution (Python, Java, C++, C, JavaScript with stdin)
+    run: async (body: { language: string; code: string; customInput?: string; testCases?: any[] }): Promise<any> => {
       if (Array.isArray(body.testCases) && body.testCases.length > 0) {
         return executeTestCasesInSandbox(body.language, body.code, body.testCases);
       }
@@ -153,7 +151,7 @@ export const api = {
     getProblems: (params?: { category?: string; difficulty?: string; search?: string }) =>
       request(`/code/problems${toQueryString(params)}`),
     getProblemDetails: (slug: string) => request(`/code/problems/${slug}`),
-    submitProblem: async (slug: string, body: { language: string; code: string }) => {
+    submitProblem: async (slug: string, body: { language: string; code: string }): Promise<any> => {
       try {
         const res = await request(`/code/problems/${slug}/submit`, { method: 'POST', body: JSON.stringify(body) });
         if (res && res.evalResult && !res.message?.includes('Demo Mode')) {

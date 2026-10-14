@@ -874,7 +874,27 @@ export function handleMockRequest<T = any>(endpoint: string, options: RequestIni
   }
 
   if (routePath === '/admin/questions' && method === 'GET') {
-    return { success: true, questions: getStoredQuestions() } as T;
+    let list = getStoredQuestions();
+    const topicParam = searchParams.get('topic');
+    const diffParam = searchParams.get('difficulty');
+    const qSearch = searchParams.get('search');
+
+    if (topicParam && topicParam !== 'All') {
+      list = list.filter(q => q.topic?.toLowerCase() === topicParam.toLowerCase());
+    }
+    if (diffParam && diffParam !== 'All') {
+      list = list.filter(q => q.difficulty?.toLowerCase() === diffParam.toLowerCase());
+    }
+    if (qSearch && qSearch.trim()) {
+      const term = qSearch.toLowerCase().trim();
+      list = list.filter(q =>
+        q.text?.toLowerCase().includes(term) ||
+        q.topic?.toLowerCase().includes(term) ||
+        q.explanation?.toLowerCase().includes(term) ||
+        q.scenarioTitle?.toLowerCase().includes(term)
+      );
+    }
+    return { success: true, count: list.length, questions: list } as T;
   }
 
   if (routePath === '/admin/questions' && method === 'POST') {
@@ -882,19 +902,63 @@ export function handleMockRequest<T = any>(endpoint: string, options: RequestIni
     const newQ = {
       _id: 'q_' + Date.now(),
       text: body.text || 'New Question',
-      topic: body.topic || 'DSA',
+      topic: body.topic || 'Data Structures',
       difficulty: body.difficulty || 'Medium',
       type: body.type || 'mcq',
-      points: Number(body.points) || 5,
-      options: body.options || [
-        { id: 'a', text: 'Option A' },
-        { id: 'b', text: 'Option B' },
-      ],
-      correctAnswerId: body.correctAnswerId || 'a',
+      points: Number(body.points) || 1,
+      options: body.options || [],
+      correctAnswerId: body.correctAnswerId || '',
       explanation: body.explanation || '',
+      rangeMin: body.rangeMin,
+      rangeMax: body.rangeMax,
+      exactAnswer: body.exactAnswer,
+      tolerance: body.tolerance,
+      allowedLanguages: body.allowedLanguages || ['python'],
+      defaultLanguage: body.defaultLanguage || 'python',
+      starterCode: body.starterCode || '',
+      testCases: body.testCases || [],
+      scenarioTitle: body.scenarioTitle || '',
+      caseStudyText: body.caseStudyText || '',
+      createdAt: new Date().toISOString(),
     };
     saveStoredQuestions([newQ, ...questions]);
     return { success: true, message: 'Question created successfully.', question: newQ } as T;
+  }
+
+  if (routePath.startsWith('/admin/questions/') && method === 'PATCH') {
+    const qId = routePath.replace('/admin/questions/', '');
+    const questions = getStoredQuestions();
+    let updatedQ: any = null;
+    const updatedList = questions.map(q => {
+      if (q._id === qId) {
+        updatedQ = { ...q, ...body, updatedAt: new Date().toISOString() };
+        return updatedQ;
+      }
+      return q;
+    });
+    if (updatedQ) {
+      saveStoredQuestions(updatedList);
+      return { success: true, message: 'Question updated successfully.', question: updatedQ } as T;
+    }
+    return { success: false, message: 'Question not found.' } as T;
+  }
+
+  if (routePath.startsWith('/admin/questions/') && method === 'DELETE') {
+    const qId = routePath.replace('/admin/questions/', '');
+    const questions = getStoredQuestions();
+    const updatedList = questions.filter(q => q._id !== qId);
+    saveStoredQuestions(updatedList);
+    return { success: true, message: 'Question deleted successfully.' } as T;
+  }
+
+  if (routePath.startsWith('/admin/questions/') && method === 'GET') {
+    const qId = routePath.replace('/admin/questions/', '');
+    const questions = getStoredQuestions();
+    const found = questions.find(q => q._id === qId);
+    if (found) {
+      return { success: true, question: found } as T;
+    }
+    return { success: false, message: 'Question not found.' } as T;
   }
 
   if (routePath === '/admin/problems') {
