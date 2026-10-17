@@ -48,14 +48,14 @@ const userSchema = new mongoose.Schema({
     default: '',
   },
   streak: {
-    current: { type: Number, default: 7 },
-    longest: { type: Number, default: 12 },
+    current: { type: Number, default: 0 },
+    longest: { type: Number, default: 0 },
     lastActiveDate: { type: Date, default: Date.now },
   },
   placementReadiness: {
-    score: { type: Number, default: 82 }, // Percentage e.g. 82% from Stitch design
-    solvedCount: { type: Number, default: 104 },
-    assessmentsCompleted: { type: Number, default: 8 },
+    score: { type: Number, default: 0 },
+    solvedCount: { type: Number, default: 0 },
+    assessmentsCompleted: { type: Number, default: 0 },
   },
   createdAt: {
     type: Date,

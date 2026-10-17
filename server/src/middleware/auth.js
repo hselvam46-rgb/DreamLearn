@@ -23,10 +23,19 @@ const protect = async (req, res, next) => {
     let decoded;
     if (token.startsWith('demo_')) {
       const isDemoAdmin = token.includes('admin');
-      decoded = {
-        email: isDemoAdmin ? 'admin@dreamlearn.edu' : 'student@dreamlearn.edu',
-        role: isDemoAdmin ? 'admin' : 'student',
-      };
+      if (token.startsWith('demo_user_') || token.startsWith('demo_student_')) {
+        const identifier = token.replace(/^demo_(user|student)_/, '');
+        if (identifier.includes('@')) {
+          decoded = { email: decodeURIComponent(identifier), role: 'student' };
+        } else {
+          decoded = { id: identifier, role: 'student' };
+        }
+      } else {
+        decoded = {
+          email: isDemoAdmin ? 'admin@dreamlearn.edu' : 'student@dreamlearn.edu',
+          role: isDemoAdmin ? 'admin' : 'student',
+        };
+      }
     } else {
       decoded = jwt.verify(token, JWT_SECRET);
     }

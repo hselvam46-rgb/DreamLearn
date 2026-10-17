@@ -22,13 +22,12 @@ const connectDB = async () => {
   try {
     const path = require('path');
     const fs = require('fs');
-    const os = require('os');
-    const dataDir = path.join(os.tmpdir(), 'dreamlearn_mongo_' + Date.now());
+    const dataDir = process.env.DATA_DIR || path.join(__dirname, '../../../.mongo_data');
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true });
     }
 
-    console.log('Starting embedded MongoDB instance (MongoMemoryServer)...');
+    console.log(`Starting embedded MongoDB instance with persistent storage at ${dataDir}...`);
     mongoServer = await MongoMemoryServer.create({
       instance: {
         dbName: 'dreamlearn',

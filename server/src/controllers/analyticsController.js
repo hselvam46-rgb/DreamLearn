@@ -74,9 +74,19 @@ const getStudentDashboardSummary = async (req, res) => {
       .sort({ submittedAt: -1 })
       .limit(5);
 
+    const solvedCount = await CodeSubmission.countDocuments({ studentId, status: 'Accepted' });
+    const assessmentsCompleted = await AssessmentAttempt.countDocuments({ studentId, status: 'completed' });
+
+    const userObj = req.user.toJSON();
+    if (!userObj.placementReadiness) {
+      userObj.placementReadiness = { score: 0, solvedCount: 0, assessmentsCompleted: 0 };
+    }
+    userObj.placementReadiness.solvedCount = Math.max(userObj.placementReadiness.solvedCount || 0, solvedCount);
+    userObj.placementReadiness.assessmentsCompleted = Math.max(userObj.placementReadiness.assessmentsCompleted || 0, assessmentsCompleted);
+
     return res.json({
       success: true,
-      user: req.user,
+      user: userObj,
       enrollments: validEnrollments,
       recentAttempts,
       recentSubmissions,

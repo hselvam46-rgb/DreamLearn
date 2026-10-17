@@ -177,7 +177,7 @@ export const StudentProfilePage: React.FC = () => {
           <Flame className="w-8 h-8 text-amber-500 fill-amber-500" />
           <div>
             <span className="text-xs text-slate-400 font-semibold block">Current Streak</span>
-            <span className="text-lg font-black text-[#102344]">{user?.streak?.current || 7} Days</span>
+            <span className="text-lg font-black text-[#102344]">{user?.streak?.current ?? 0} Days</span>
           </div>
         </div>
 
@@ -185,7 +185,7 @@ export const StudentProfilePage: React.FC = () => {
           <Target className="w-8 h-8 text-primary-container" />
           <div>
             <span className="text-xs text-slate-400 font-semibold block">Readiness Score</span>
-            <span className="text-lg font-black text-[#102344]">{user?.placementReadiness?.score || 82}%</span>
+            <span className="text-lg font-black text-[#102344]">{user?.placementReadiness?.score ?? 0}%</span>
           </div>
         </div>
 
@@ -193,7 +193,7 @@ export const StudentProfilePage: React.FC = () => {
           <Award className="w-8 h-8 text-emerald-500" />
           <div>
             <span className="text-xs text-slate-400 font-semibold block">Solved Problems</span>
-            <span className="text-lg font-black text-[#102344]">{user?.placementReadiness?.solvedCount || 104}</span>
+            <span className="text-lg font-black text-[#102344]">{user?.placementReadiness?.solvedCount ?? 0}</span>
           </div>
         </div>
       </div>

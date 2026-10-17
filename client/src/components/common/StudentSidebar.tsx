@@ -81,11 +81,11 @@ export const StudentSidebar: React.FC<StudentSidebarProps> = ({ onCloseMobile })
             <div className="flex items-center gap-2 mt-1">
               <span className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200/60">
                 <Flame className="w-3 h-3 fill-amber-500 text-amber-500" />
-                {user?.streak?.current || 7}d
+                {user?.streak?.current ?? 0}d
               </span>
               <span className="inline-flex items-center gap-0.5 text-[11px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200/60">
                 <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                {user?.placementReadiness?.score || 82}%
+                {user?.placementReadiness?.score ?? 0}%
               </span>
             </div>
           </div>

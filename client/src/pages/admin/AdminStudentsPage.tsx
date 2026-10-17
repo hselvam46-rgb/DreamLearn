@@ -177,11 +177,11 @@ export const AdminStudentsPage: React.FC = () => {
                     </td>
 
                     <td className="py-4 px-6 font-bold text-emerald-600">
-                      {st.placementReadiness?.score || 82}%
+                      {st.placementReadiness?.score ?? 0}%
                     </td>
 
                     <td className="py-4 px-6 text-amber-600 font-bold">
-                      {st.streak?.current || 0} Days
+                      {st.streak?.current ?? 0} Days
                     </td>
 
                     <td className="py-4 px-6">

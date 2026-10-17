@@ -14,6 +14,26 @@ const STORAGE_ASSESSMENTS = 'dreamlearn_demo_assessments_v2';
 const STORAGE_ENROLLMENTS = 'dreamlearn_demo_enrollments_v2';
 const STORAGE_CURRICULUM = 'dreamlearn_demo_curriculum_v2';
 const STORAGE_QUESTIONS = 'dreamlearn_demo_questions_v3';
+const STORAGE_REGISTERED_STUDENTS = 'dreamlearn_registered_students_v2';
+
+export function getRegisteredStudents(): any[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_REGISTERED_STUDENTS);
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    }
+  } catch (e) { }
+  return [];
+}
+
+export function saveRegisteredStudent(student: any) {
+  try {
+    const current = getRegisteredStudents();
+    const updated = [student, ...current.filter((s) => s.email !== student.email)];
+    localStorage.setItem(STORAGE_REGISTERED_STUDENTS, JSON.stringify(updated));
+  } catch (e) { }
+}
 
 export function getStoredCourses(): any[] {
   try {
@@ -177,15 +197,28 @@ export function handleMockRequest<T = any>(endpoint: string, options: RequestIni
   }
 
   if (routePath === '/auth/register') {
+    const email = (body.email || 'learner@dreamlearn.edu').toLowerCase().trim();
+    const name = (body.name || 'New Learner').trim();
+    const userId = 'usr_' + Date.now();
     const newUser = {
-      ...DEMO_STUDENT,
-      _id: 'usr_' + Date.now(),
-      name: body.name || 'New Learner',
-      email: body.email || 'learner@dreamlearn.edu',
+      _id: userId,
+      name,
+      email,
+      role: 'student' as const,
+      status: 'active' as const,
+      avatar: '',
+      phone: '',
+      college: '',
+      graduationYear: 2026,
+      targetCompany: '',
+      createdAt: new Date().toISOString(),
+      streak: { current: 0, longest: 0, lastActiveDate: new Date().toISOString() },
+      placementReadiness: { score: 0, solvedCount: 0, assessmentsCompleted: 0 },
     };
-    const token = 'demo_jwt_token_student_2026';
+    const token = `demo_user_${encodeURIComponent(email)}`;
     localStorage.setItem('dreamlearn_token', token);
     localStorage.setItem('dreamlearn_user', JSON.stringify(newUser));
+    saveRegisteredStudent(newUser);
 
     return {
       success: true,
@@ -393,9 +426,11 @@ export function handleMockRequest<T = any>(endpoint: string, options: RequestIni
     );
 
     if (!existing) {
+      const currentUser = localStorage.getItem('dreamlearn_user') ? JSON.parse(localStorage.getItem('dreamlearn_user')!) : DEMO_STUDENT;
+      const currentStudentId = currentUser?._id || DEMO_STUDENT._id;
       const newEnrollment = {
         _id: 'enr_' + Date.now(),
-        studentId: DEMO_STUDENT._id,
+        studentId: currentStudentId,
         courseId: targetCourse,
         enrolledAt: new Date().toISOString(),
         status: 'active',
@@ -428,8 +463,28 @@ export function handleMockRequest<T = any>(endpoint: string, options: RequestIni
 
   // Student Enrollments list
   if (routePath === '/courses/user/my-enrollments') {
+    const currentUser = localStorage.getItem('dreamlearn_user') ? JSON.parse(localStorage.getItem('dreamlearn_user')!) : DEMO_STUDENT;
     const enrollments = getStoredEnrollments();
-    return { success: true, enrollments } as T;
+    const userEnrollments = enrollments.filter(
+      (e) => e.studentId === currentUser?._id || (!e.studentId && currentUser?._id === DEMO_STUDENT._id)
+    );
+    return { success: true, enrollments: userEnrollments } as T;
+  }
+
+  // Student Dashboard summary
+  if (routePath === '/student/dashboard') {
+    const currentUser = localStorage.getItem('dreamlearn_user') ? JSON.parse(localStorage.getItem('dreamlearn_user')!) : DEMO_STUDENT;
+    const enrollments = getStoredEnrollments();
+    const userEnrollments = enrollments.filter(
+      (e) => e.studentId === currentUser?._id || (!e.studentId && currentUser?._id === DEMO_STUDENT._id)
+    );
+    return {
+      success: true,
+      user: currentUser,
+      enrollments: userEnrollments,
+      recentAttempts: [],
+      recentSubmissions: [],
+    } as T;
   }
 
   // Curriculum & Lesson content
@@ -844,28 +899,33 @@ export function handleMockRequest<T = any>(endpoint: string, options: RequestIni
   }
 
   if (routePath === '/admin/students') {
+    const registered = getRegisteredStudents();
+    const defaultStudents = [
+      DEMO_STUDENT,
+      {
+        ...DEMO_STUDENT,
+        _id: 'usr_002',
+        name: 'Priya Sharma',
+        email: 'priya.s@dreamlearn.edu',
+        college: 'IIT Madras',
+        placementReadiness: { score: 91, solvedCount: 148, assessmentsCompleted: 11 },
+      },
+      {
+        ...DEMO_STUDENT,
+        _id: 'usr_003',
+        name: 'Rohan Varma',
+        email: 'rohan.v@dreamlearn.edu',
+        college: 'BITS Pilani',
+        placementReadiness: { score: 76, solvedCount: 88, assessmentsCompleted: 6 },
+      },
+    ];
+    const registeredEmails = new Set(registered.map((r: any) => r.email));
+    const allStudents = [...registered, ...defaultStudents.filter((d: any) => !registeredEmails.has(d.email))];
     return {
       success: true,
-      students: [
-        DEMO_STUDENT,
-        {
-          ...DEMO_STUDENT,
-          _id: 'usr_002',
-          name: 'Priya Sharma',
-          email: 'priya.s@dreamlearn.edu',
-          college: 'IIT Madras',
-          placementReadiness: { score: 91, solvedCount: 148, assessmentsCompleted: 11 },
-        },
-        {
-          ...DEMO_STUDENT,
-          _id: 'usr_003',
-          name: 'Rohan Varma',
-          email: 'rohan.v@dreamlearn.edu',
-          college: 'BITS Pilani',
-          placementReadiness: { score: 76, solvedCount: 88, assessmentsCompleted: 6 },
-        },
-      ],
-      total: 3,
+      students: allStudents,
+      total: allStudents.length,
+      count: allStudents.length,
     } as T;
   }
 

@@ -168,7 +168,7 @@ export const StudentDashboard: React.FC = () => {
             />
             <div className="absolute bottom-2 left-2 right-2 bg-slate-900/80 backdrop-blur-md px-2 py-1 rounded-lg text-center border border-white/10">
               <span className="text-[10px] font-extrabold text-emerald-400">
-                {user?.placementReadiness?.score || 82}% Placement Ready
+                {user?.placementReadiness?.score ?? 0}% Placement Ready
               </span>
             </div>
           </div>
@@ -191,19 +191,22 @@ export const StudentDashboard: React.FC = () => {
                 strokeWidth="4.5"
                 fill="none"
                 strokeDasharray={138}
-                strokeDashoffset={138 - (138 * (user?.placementReadiness?.score || 82)) / 100}
+                strokeDashoffset={138 - (138 * Math.min(100, user?.placementReadiness?.score ?? 0)) / 100}
                 strokeLinecap="round"
               />
             </svg>
             <span className="absolute text-xs font-black text-[#102344]">
-              {user?.placementReadiness?.score || 82}%
+              {user?.placementReadiness?.score ?? 0}%
             </span>
           </div>
           <div>
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Readiness</span>
-            <span className="text-base font-extrabold text-[#102344] block">Placement Ready</span>
+            <span className="text-base font-extrabold text-[#102344] block">
+              {(user?.placementReadiness?.score ?? 0) > 0 ? 'Placement Ready' : 'Getting Started'}
+            </span>
             <span className="text-[11px] text-emerald-600 font-semibold flex items-center gap-0.5 mt-0.5">
-              <TrendingUp className="w-3 h-3" /> Top 15% in cohort
+              <TrendingUp className="w-3 h-3" />
+              {(user?.placementReadiness?.score ?? 0) > 0 ? 'Top cohort progress' : 'Beginner track active'}
             </span>
           </div>
         </div>
@@ -216,11 +219,11 @@ export const StudentDashboard: React.FC = () => {
           <div>
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Consistency</span>
             <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-black text-[#102344]">{user?.streak?.current || 7}</span>
+              <span className="text-2xl font-black text-[#102344]">{user?.streak?.current ?? 0}</span>
               <span className="text-xs font-bold text-slate-500">Day Streak</span>
             </div>
             <span className="text-[11px] text-amber-700 font-semibold mt-0.5 block">
-              Longest: {user?.streak?.longest || 14} days
+              {(user?.streak?.longest ?? 0) > 0 ? `Longest: ${user?.streak?.longest} days` : 'Start your streak today!'}
             </span>
           </div>
         </div>
@@ -232,14 +235,29 @@ export const StudentDashboard: React.FC = () => {
           </div>
           <div className="flex-1">
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Daily Target</span>
-            <div className="flex items-baseline justify-between">
-              <span className="text-sm font-extrabold text-[#102344]">35 / 45 mins</span>
-              <span className="text-[11px] font-bold text-[#165DCE]">78%</span>
-            </div>
-            <div className="w-full h-1.5 rounded-full bg-slate-100 overflow-hidden mt-1.5">
-              <div className="h-full bg-[#165DCE] rounded-full" style={{ width: '78%' }} />
-            </div>
-            <span className="text-[10px] text-slate-400 mt-1 block">Goal met 5/7 days this week</span>
+            {validEnrollments.length > 0 ? (
+              <>
+                <div className="flex items-baseline justify-between">
+                  <span className="text-sm font-extrabold text-[#102344]">35 / 45 mins</span>
+                  <span className="text-[11px] font-bold text-[#165DCE]">78%</span>
+                </div>
+                <div className="w-full h-1.5 rounded-full bg-slate-100 overflow-hidden mt-1.5">
+                  <div className="h-full bg-[#165DCE] rounded-full" style={{ width: '78%' }} />
+                </div>
+                <span className="text-[10px] text-slate-400 mt-1 block">Goal met this week</span>
+              </>
+            ) : (
+              <>
+                <div className="flex items-baseline justify-between">
+                  <span className="text-sm font-extrabold text-[#102344]">0 / 45 mins</span>
+                  <span className="text-[11px] font-bold text-slate-400">0%</span>
+                </div>
+                <div className="w-full h-1.5 rounded-full bg-slate-100 overflow-hidden mt-1.5">
+                  <div className="h-full bg-slate-200 rounded-full" style={{ width: '0%' }} />
+                </div>
+                <span className="text-[10px] text-slate-400 mt-1 block">Start your first lesson</span>
+              </>
+            )}
           </div>
         </div>
 
@@ -251,7 +269,7 @@ export const StudentDashboard: React.FC = () => {
           <div>
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Practice Bank</span>
             <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-black text-[#102344]">{user?.placementReadiness?.solvedCount || 104}</span>
+              <span className="text-2xl font-black text-[#102344]">{user?.placementReadiness?.solvedCount ?? 0}</span>
               <span className="text-xs font-bold text-slate-500">Solved</span>
             </div>
             <Link to="/student/problems" className="text-[11px] text-[#165DCE] font-bold hover:underline block mt-0.5">
@@ -355,14 +373,14 @@ export const StudentDashboard: React.FC = () => {
                 </p>
               </div>
               <span className="text-xs font-black text-[#165DCE] bg-blue-50 px-3 py-1 rounded-full border border-blue-100">
-                12.0 Hours Total
+                {validEnrollments.length > 0 ? '12.0 Hours Total' : '0.0 Hours Total'}
               </span>
             </div>
 
             {/* Activity Bar Chart */}
             <div className="pt-4 pb-2">
               <div className="grid grid-cols-7 gap-3 sm:gap-6 items-end h-32 px-2">
-                {weeklyDays.map((d) => {
+                {(validEnrollments.length > 0 ? weeklyDays : weeklyDays.map(d => ({ ...d, hours: 0, active: false }))).map((d) => {
                   const barHeight = Math.round((d.hours / maxHours) * 100);
                   return (
                     <div key={d.day} className="flex flex-col items-center gap-2 h-full justify-end group">
@@ -393,7 +411,7 @@ export const StudentDashboard: React.FC = () => {
                 <span className="w-2.5 h-2.5 rounded-full bg-[#165DCE]" />
                 <span>Today's active session</span>
               </span>
-              <span>Consistent 7 days this cycle 🔥</span>
+              <span>{validEnrollments.length > 0 ? 'Consistent learning streak 🔥' : 'Start your first session today'}</span>
             </div>
           </div>
 
